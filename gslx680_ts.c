@@ -86,6 +86,104 @@ struct gsl_ts {
 };
 
 
+static int gsl_ts_write(struct i2c_client *client, u8 addr, u8 *pdata, int datalen)
+{
+	int ret = 0;
+	u8 tmp_buf[128];
+	unsigned int bytelen = 0;
+	if (datalen > 125)
+	{
+		printk("%s too big datalen = %d!\n", __func__, datalen);
+		return -1;
+	}
+	
+	tmp_buf[0] = addr;
+	bytelen++;
+	
+	if (datalen != 0 && pdata != NULL)
+	{
+		memcpy(&tmp_buf[bytelen], pdata, datalen);
+		bytelen += datalen;
+	}
+	
+	ret = i2c_master_send(client, tmp_buf, bytelen);
+	return ret;
+}
+
+static int gsl_ts_read(struct i2c_client *client, u8 addr, u8 *pdata, unsigned int datalen)
+{
+	int ret = 0;
+
+	if (datalen > 126)
+	{
+		printk("%s too big datalen = %d!\n", __func__, datalen);
+		return -1;
+	}
+
+	ret = gsl_ts_write(client, addr, NULL, 0);
+	if (ret < 0)
+	{
+		printk("%s set data address fail!\n", __func__);
+		return ret;
+	}
+	
+	return i2c_master_recv(client, pdata, datalen);
+}
+
+
+
+static void gsl_ts_xy_worker(struct work_struct *work)
+{
+	int rc;
+	u8 read_buf[4] = {0};
+
+	struct gsl_ts *ts = container_of(work, struct gsl_ts,work);
+
+	pr_info("---gsl_ts_xy_worker---\n");				 
+
+	if (ts->is_suspended == true) {
+		dev_dbg(&ts->client->dev, "TS is supended\n");
+		ts->int_pending = true;
+		goto schedule;
+	}
+
+	/* read data from DATA_REG */
+	rc = gsl_ts_read(ts->client, 0x80, ts->touch_data, ts->dd->data_size);
+	pr_info("---touches: %d ---\n",ts->touch_data[0]);		
+		
+	if (rc < 0) 
+	{
+		dev_err(&ts->client->dev, "read failed\n");
+		goto schedule;
+	}
+
+	if (ts->touch_data[ts->dd->touch_index] == 0xff) {
+		goto schedule;
+	}
+
+	rc = gsl_ts_read( ts->client, 0xbc, read_buf, sizeof(read_buf));
+	if (rc < 0) 
+	{
+		dev_err(&ts->client->dev, "read 0xbc failed\n");
+		goto schedule;
+	}
+	pr_info("//////// reg %x : %x %x %x %x\n",0xbc, read_buf[3], read_buf[2], read_buf[1], read_buf[0]);
+		
+	//TODO
+	if (read_buf[3] == 0 && read_buf[2] == 0 && read_buf[1] == 0 && read_buf[0] == 0)
+	{
+		//process_gslX680_data(ts);
+	}
+	else
+	{
+		//reset_chip(ts->client);
+		//startup_chip(ts->client);
+	}
+	
+schedule:
+	enable_irq(SW_INT_IRQNO_PIO);
+		
+}
 /*
  * It sucks this is duplicated for each driver right now.
 */
@@ -407,8 +505,7 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 	}
 	flush_workqueue(ts->wq);	
 
-	//TODO
-	//INIT_WORK(&ts->work, gsl_ts_xy_worker);
+	INIT_WORK(&ts->work, gsl_ts_xy_worker);
 
 	rc = input_register_device(input_device);
 	if (rc)
