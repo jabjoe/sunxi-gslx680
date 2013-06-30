@@ -414,6 +414,7 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 	if (rc)
 		goto error_unreg_device;
 
+	client->irq = SW_INT_IRQNO_PIO;
 
 	return 0;
 error_unreg_device:
