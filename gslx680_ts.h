@@ -11,109 +11,109 @@ struct fw_data
 
 static const struct fw_data GSLX680_FW[] = {
 {0xf0,0xfa},
-{0x00,0xd64df840},	//Ğ£ÑéÂëµÄ²¹³ä,Èí¼şÉú³É
-{0x04,0x0000000a},	//×î´óµãÊı
-{0x08,0x000001f4},	//°´¼üãĞÖµ
-{0x0c,0x00000100},	//µ½±ßÂÊ
-{0x10,0x00000000},	//ÁãµããĞÖµ
-{0x14,0x00000000},	//DACÔöÁ¿
-{0x18,0x00000fff},	//É¨ÃèÑÓÊ±£¨Èí¼şÆ½¾ùÖĞ£©
-{0x1c,0x10000000},	//ºá£¬Æ¥ÅäÏµÊı
-{0x20,0x10000000},	//Êú£¬Æ¥ÅäÏµÊı
-{0x24,0x00000000},	//ºá£¬ÏŞ¶¨·¶Î§
-{0x28,0x00000000},	//Êú£¬ÏŞ¶¨·¶Î§
-{0x2c,0x00000400},	//ËÀµã·¶Î§
-{0x30,0x00808080},	//²îÖµµ÷ÕûÏµÊıable,0-2
-{0x34,0x80808080},	//6
-{0x38,0x80808080},	//10
-{0x3c,0x80808080},	//14
-{0x40,0x80808080},	//18
-{0x44,0x80808080},	//22
-{0x48,0x80808080},	//26
-{0x4c,0x80808080},	//30
-{0x50,0x000000a0},	//»ù×¼µ÷ÕûÆÁ±ÎÓĞĞ§µãÖÜÎ§ÇøÓò
-{0x54,0x00020303},	//ÏßĞÔĞ£ÕıÏµÊı0-3
-{0x58,0x04050507},	//7
-{0x5c,0x07090909},	//11
-{0x60,0x0b0b0d0d},	//15
-{0x64,0x0d101011},	//19
-{0x68,0x12121415},	//23
-{0x6c,0x15161919},	//27
-{0x70,0x191b1d1f},	//ÏßĞÔĞ£ÕıÏµÊı28-31
-{0x74,0x00000001},	//ÏßĞÔĞ£Õı¿ª¹Ø
-{0x78,0x0000001e},	//Çı¶¯ÏßÊıÁ¿£¬°üÀ¨°´¼ü
-{0x7c,0x00000014},	//¸ĞÓ¦ÏßÊıÁ¿£¬°üÀ¨°´¼ü
+{0x00,0xd64df840}, // â€‹â€‹checksum added software to generate
+{0x04,0x0000000a}, // â€‹â€‹maximum number of points
+{0x08,0x000001f4}, // â€‹â€‹key threshold
+{0x0c,0x00000100}, // â€‹â€‹to the edge rate
+{0x10,0x00000000}, // â€‹â€‹Zero Threshold
+{0x14,0x00000000}, // â€‹â€‹DAC increment
+{0x18,0x00000fff}, // â€‹â€‹Scan Delay (software-average)
+{0x1c,0x10000000}, // â€‹â€‹horizontal, matching coefficient
+{0x20,0x10000000}, // â€‹â€‹vertical, matching coefficient
+{0x24,0x00000000}, // â€‹â€‹horizontal, limits
+{0x28,0x00000000}, // â€‹â€‹vertical, limits
+{0x2c,0x00000400}, // â€‹â€‹dead point range
+{0x30,0x00808080}, // â€‹â€‹difference adjustment factor able ,0-2
+{0x34,0x80808080}, // â€‹â€‹6
+{0x38,0x80808080}, // â€‹â€‹10
+{0x3c,0x80808080}, // â€‹â€‹14
+{0x40,0x80808080}, // â€‹â€‹18
+{0x44,0x80808080}, // â€‹â€‹22
+{0x48,0x80808080}, // â€‹â€‹26
+{0x4c,0x80808080}, // â€‹â€‹30
+{0x50,0x000000a0}, // â€‹â€‹reference point to adjust the effective shielding surrounding area
+{0x54,0x00020303}, // â€‹â€‹linear correction factor 0-3
+{0x58,0x04050507}, // â€‹â€‹7
+{0x5c,0x07090909}, // â€‹â€‹11
+{0x60,0x0b0b0d0d}, // â€‹â€‹15
+{0x64,0x0d101011}, // â€‹â€‹19
+{0x68,0x12121415}, // â€‹â€‹23
+{0x6c,0x15161919}, // â€‹â€‹27
+{0x70,0x191b1d1f}, // â€‹â€‹linear correction factor 28-31
+{0x74,0x00000001}, // â€‹â€‹linear calibration switch
+{0x78,0x0000001e}, // â€‹â€‹number of drive lines, including key
+{0x7c,0x00000014}, // â€‹â€‹number of sense lines, including key
 {0xf0,0xfb},
-{0x00,0x0000001e},	//Çı¶¯Ïß
-{0x04,0x00000000},	//°´¼üÓĞÎŞ
-{0x08,0x00000014},	//¸ĞÓ¦Ïß
-{0x0c,0x00000100},	//²îÖµÆ«ÒÆÁ¿
-{0x10,0x00000032},	//Ô­Ê¼Öµ¼ì²â¼ä¸ô
-{0x14,0x00000032},	//»ù×¼Öµµ÷Õû¼ä¸ô
-{0x18,0x00000000},	//INTERRUPT_HIGH_LOW_TYPE_ADDR ¿ª¹Ø£¬ÖĞ¶ÏµÄÖĞ¶ÏµÄ¸ßµÍµçÆ½
-{0x1c,0x00000001},	//INTERRUPT_EDGE_LEVEL_TYPE_ADDR,1_edge_trigger__0_level_triggerÖĞ¶ÏµÄÀàĞÍ
-{0x20,0x00002904},	//INTERRUPT_WIDTH_ADDR	ÖĞ¶ÏµÄ¿í¶È
-{0x24,0x00000320},	//·Ö±æÂÊVGA_LENGTH_ADDR£¨ºáÏò£©
-{0x28,0x00000500},	//·Ö±æÂÊVGA_WIDTH_ADDR £¨ÊúÏò£©
-{0x2c,0xf801000c},	//±¨µãÊ±µÄÓ²¼şÆ½¾ù´ÎÊı
-{0x30,0xf801000c},	//µ÷ÆÁÊ±Ó²¼şÆ½¾ù´ÎÊı
-{0x34,0x00000005},	//Èí¼şÆ½¾ù´ÎÊı,Ğ§¹û²»ºÃ£¬½¨ÒéÖµ0£¬ÉÏÏŞ7
-{0x38,0x00000003},	//Çı¶¯µçÑ¹
-{0x3c,0x00000fff},	//É¨ÃèÑÓÊ±
-{0x40,0x80000000},	//Ğ¾Æ¬ËÙ¶È£¬²»½¨Òé¸ü¸Ä
-{0x44,0x00100010},	//dacg
-{0x48,0x00000fff},	//µ÷ÆÁÄ¿±êÖµ
-{0x4c,0x00000004},	//µ÷»ù×¼Öµ·ù¶È£¬²îÖµµÄÒÆÎ»
-{0x50,0x00020001},	//ĞĞÆ½¾ù²ÉÑù·¶Î§£¬£¨¼Æ»®£©ÔÚpcÉÏ×öÊÇ·ñ³¬·¶Î§µÄÅĞ¶Ï
-{0x54,0x00000000},	//×îĞ¡ÒÆ¶¯Öµ(È¥¶¶)
-{0x58,0x00005dc0},	//IDÅĞ¶ÏµÄËÙ¶ÈÏµÊı
-{0x5c,0x00000000},	//ÑÓ³Ù±¨µã
-{0x60,0x00000000},	//ÄâºÏ¿ª¹Ø
-{0x64,0x000007d0},	//ÖØµ÷ÆÁãĞÖµ,µÚÒ»×édac
-{0x68,0x000007d0},	//ÖØµ÷ÆÁãĞÖµ,µÚ¶ş×édac
-{0x6c,0x000007d0},	//ÖØµ÷ÆÁãĞÖµ,µÚÈı×édac
-{0x70,0x000007d0},	//ÖØµ÷ÆÁãĞÖµ,µÚËÄ×édac
-{0x74,0x00000096},	//×Ô¶¨ÒåÆµÂÊ£¬0Ä¬ÈÏ
-{0x78,0x00000064},	//ËÀµãÊ±¼ä
-{0x7c,0x00000000},	//¸ĞÓ¦Ïß°´¼ü
+{0x00,0x0000001e}, // â€‹â€‹drive line
+{0x04,0x00000000}, // â€‹â€‹button without
+{0x08,0x00000014}, // â€‹â€‹sense lines
+{0x0c,0x00000100}, // â€‹â€‹offset the difference
+{0x10,0x00000032}, // â€‹â€‹original value detection interval
+{0x14,0x00000032}, // â€‹â€‹reference value adjustment interval
+{0x18,0x00000000}, // â€‹â€‹INTERRUPT_HIGH_LOW_TYPE_ADDR switch, high and low of interrupt
+{0x1c,0x00000001}, // â€‹â€‹INTERRUPT_EDGE_LEVEL_TYPE_ADDR, 1_edge_trigger__0_level_trigger type of disruption
+{0x20,0x00002904}, // â€‹â€‹INTERRUPT_WIDTH_ADDR interrupt width
+{0x24,0x00000320}, // â€‹â€‹Resolution VGA_LENGTH_ADDR (horizontal)
+{0x28,0x00000500}, // â€‹â€‹Resolution VGA_WIDTH_ADDR (vertical)
+{0x2c,0xf801000c}, // â€‹â€‹at point average number of hardware
+{0x30,0xf801000c}, // â€‹â€‹adjust screen when the average number of hardware
+{0x34,0x00000005}, // â€‹â€‹average number of times the software, the effect is not good, recommended value 0, maximum 7
+{0x38,0x00000003}, // â€‹â€‹drive voltage
+{0x3c,0x00000fff}, // â€‹â€‹Scan Delay
+{0x40,0x80000000}, // â€‹â€‹chip speed, not recommended to change
+{0x44,0x00100010}, // â€‹â€‹dacg
+{0x48,0x00000fff}, // â€‹â€‹adjust screen target
+{0x4c,0x00000004}, // â€‹â€‹adjust the amplitude reference value, the difference is the shift
+{0x50,0x00020001}, // â€‹â€‹OK average sampling scope (program) is done on the pc beyond the scope of the judgment
+{0x54,0x00000000}, // â€‹â€‹minimum shift value (debounced)
+{0x58,0x00005dc0}, // â€‹â€‹ID judge the speed factor
+{0x5c,0x00000000}, // â€‹â€‹delay at points
+{0x60,0x00000000}, // â€‹â€‹fitting switch
+{0x64,0x000007d0}, // â€‹â€‹re-adjust screen threshold value, the first group of dac
+{0x68,0x000007d0}, // â€‹â€‹re-adjust screen threshold, the second group dac
+{0x6c,0x000007d0}, // â€‹â€‹re-adjust screen threshold value, the third group dac
+{0x70,0x000007d0}, // â€‹â€‹re-adjust screen threshold, the fourth group dac
+{0x74,0x00000096}, // â€‹â€‹custom frequency, 0 Default
+{0x78,0x00000064}, // â€‹â€‹dead time
+{0x7c,0x00000000}, // â€‹â€‹sense line button
 {0xf0,0xfc},
-{0x00,0x0b010a00},	//ÄÚºË¶ÁÈ¡Ô­Ê¼ÖµµÄË³Ğò£¬¿¼ÂÇ2´Î´ó¶ËÄ£Ê½0-3
-{0x04,0x0d030c02},	//¶ÁÈ¡Ë³Ğò4-7
-{0x08,0x0f050e04},	//¶ÁÈ¡Ë³Ğò8-11
-{0x0c,0x11071006},	//¶ÁÈ¡Ë³Ğò12-15
-{0x10,0x13091208},	//¶ÁÈ¡Ë³Ğò16-20
-{0x14,0x00098765},	//É¨ÃèË³Ğò1+
-{0x18,0x004321ab},	//É¨ÃèË³Ğò2+
-{0x1c,0x00876543},	//É¨ÃèË³Ğò1-
-{0x20,0x002109ab},	//É¨ÃèË³Ğò2-
-{0x24,0xff080010},	//dac0µØÖ·
-{0x28,0xff080120},	//dac1µØÖ·
-{0x2c,0xff080140},	//dac2µØÖ·
-{0x30,0xff080160},	//dac3µØÖ·
-{0x34,0x001700e9},	//conf_test0//threshold_h
-{0x38,0x001700ef},	//conf_test1//threshold_mh
-{0x3c,0x000f0098},	//conf_test2//threshold_mh
-{0x40,0x000a0067},	//conf_test3//threshold_l
+{0x00,0x0b010a00}, // â€‹â€‹kernel reads the original value of the order, considering the two big-endian mode 0-3 times
+{0x04,0x0d030c02}, // â€‹â€‹reading order 4-7
+{0x08,0x0f050e04}, // â€‹â€‹read sequence 8-11
+{0x0c,0x11071006}, // â€‹â€‹reading order 12-15
+{0x10,0x13091208}, // â€‹â€‹reading order 16-20
+{0x14,0x00098765}, // â€‹â€‹scan order 1 +
+{0x18,0x004321ab}, // â€‹â€‹scan order 2 +
+{0x1c,0x00876543}, // â€‹â€‹Scan order 1 -
+{0x20,0x002109ab}, // â€‹â€‹Scan Sequence 2 -
+{0x24,0xff080010}, // â€‹â€‹dac0 Address
+{0x28,0xff080120}, // â€‹â€‹dac1 Address
+{0x2c,0xff080140}, // â€‹â€‹dac2 Address
+{0x30,0xff080160}, // â€‹â€‹dac3 Address
+{0x34,0x001700e9}, // â€‹â€‹conf_test0 / / threshold_h
+{0x38,0x001700ef}, // â€‹â€‹conf_test1 / / threshold_mh
+{0x3c,0x000f0098}, // â€‹â€‹conf_test2 / / threshold_mh
+{0x40,0x000a0067}, // â€‹â€‹conf_test3 / / threshold_l
 {0x44,0x00000100},
-{0x48,0x00000000},	//µãÊı³¬¹ıÉÏÏŞÊÇ·ñÆÁ±Î
-{0x4c,0x00000000},	//²îÖµ¸ºÊıÉÏÏŞ
-{0x50,0x00000000},	//µ÷ÆÁÓÃµÄ±êÖ¾
-{0x54,0x00000004},	//×Ü¹²ÓÃÁË¼¸×édac
-{0x58,0x00070000},	//µÚ1×édac¿ØÖÆµÚ0ĞĞµ½µÚ1eĞĞ£¬ÒªºÍÏßĞòÉèÖÃµÄ¶ÔÓ¦ÉÏ
-{0x5c,0x000f0008},	//  2
-{0x60,0x00160010},	//  3
-{0x64,0x001d0017},	//  4
-{0x68,0x00050002},	//µÚ1×édacµ÷ÆÁÊ±£¬È¡¸Ã×éĞ¡µ½´óÅÅĞòÖ®ºóµÄµÚ2¸öµ½µÚa¸ö
-{0x6c,0x00050002},	//  2
-{0x70,0x00050002},	//  3
-{0x74,0x00050002},	//  4
-{0x78,0x00987654},	//Ğ´ÈëĞ¾Æ¬µÄµÚÒ»¸öÉ¨ÃèË³Ğò£¬ÓÃpcÈí¼şÉú³É
-{0x7c,0x003210ab},	//Ğ´ÈëĞ¾Æ¬µÄµÚ¶ş¸öÉ¨ÃèË³Ğò£¬ÓÃpcÈí¼şÉú³É
+{0x48,0x00000000}, // â€‹â€‹number of points exceeds the upper limit is shielded
+{0x4c,0x00000000}, // â€‹â€‹maximum negative difference
+{0x50,0x00000000}, // â€‹â€‹adjust the screen to use the logo
+{0x54,0x00000004}, // â€‹â€‹dac spent a total of several groups
+{0x58,0x00070000}, // â€‹â€‹dac control group 1 row 0 to 1e line, and the line should correspond to the sequence set
+{0x5c,0x000f0008}, // â€‹â€‹2
+{0x60,0x00160010}, // â€‹â€‹3
+{0x64,0x001d0017}, // â€‹â€‹4
+{0x68,0x00050002}, // â€‹â€‹Group 1 dac tune screen, take the group of small to large order after the first two months to a
+{0x6c,0x00050002}, // â€‹â€‹2
+{0x70,0x00050002}, // â€‹â€‹3
+{0x74,0x00050002}, // â€‹â€‹4
+{0x78,0x00987654}, // â€‹â€‹write chip first scan sequence generated by pc software
+{0x7c,0x003210ab}, // â€‹â€‹write chip second scanning sequence, with the pc software to generate
 {0xf0,0xfd},
-{0x00,0x03ef01fd},	//Çı¶¯ÏßÏßĞò
-{0x04,0x03cf01fc},	//[11:0]Çı¶¯ÏßÉ¨ÃèË³Ğò
-{0x08,0x03af01fb},	//[12]É¨ÃèÍ£Ö¹Î»
-{0x0c,0x038f01fa},	//[15:13]¸ÃÇı¶¯ÏßÓÃµÚ¼¸¸ödac
+{0x00,0x03ef01fd}, // â€‹â€‹drive line line order
+{0x04,0x03cf01fc}, // â€‹â€‹[11:0] driving line scan order
+{0x08,0x03af01fb}, // â€‹â€‹[12] Scan stop bit
+{0x0c,0x038f01fa}, // â€‹â€‹[15:13] The first few lines dac driver
 {0x10,0x236f21f9},
 {0x14,0x234f21f8},
 {0x18,0x232f21f7},
@@ -125,23 +125,23 @@ static const struct fw_data GSLX680_FW[] = {
 {0x30,0x626f624f},
 {0x34,0x622f620f},
 {0x38,0x61f171f0},
-{0x3c,0x01fe43ef},	//Çı¶¯ÏßÏßĞò½áÊø
-{0x40,0x02040608},	//°ëĞĞÆ½¾ù²ÉÑù1
-{0x44,0x0a0c0e10},	//°ëĞĞÆ½¾ù²ÉÑù1
-{0x48,0x12140000},	//°ëĞĞÆ½¾ù²ÉÑù1
-{0x4c,0x01030507},	//°ëĞĞÆ½¾ù²ÉÑù2
-{0x50,0x090b0d0f},	//°ëĞĞÆ½¾ù²ÉÑù2
-{0x54,0x11130000},	//°ëĞĞÆ½¾ù²ÉÑù2
-{0x58,0x00000000},	//ÁĞÆ½¾ù
-{0x5c,0x00000008},	//IDÆğÊ¼ÏµÊı
-{0x60,0x00000320},	//ÁĞ°´ÏÂãĞÖµ£¬°üÀ¨Ë®Æ½Ïß
-{0x64,0x00000403},	//ÁĞ°´ÏÂ¸öÊı
-{0x68,0x00000402},	//Èí¼şÆ½¾ùÔöÁ¿
-{0x6c,0x00000001},	//ÖØĞÄÊ¹ÄÜ
+{0x3c,0x01fe43ef}, // â€‹â€‹end of line sequence drive line
+{0x40,0x02040608}, // â€‹â€‹average sampling a half-line
+{0x44,0x0a0c0e10}, // â€‹â€‹average sampling a half-line
+{0x48,0x12140000}, // â€‹â€‹average sampling a half-line
+{0x4c,0x01030507}, // â€‹â€‹half line average sampling 2
+{0x50,0x090b0d0f}, // â€‹â€‹half line average sampling 2
+{0x54,0x11130000}, // â€‹â€‹half line average sampling 2
+{0x58,0x00000000}, // â€‹â€‹Column Average
+{0x5c,0x00000008}, // â€‹â€‹ID starting coefficient
+{0x60,0x00000320}, // â€‹â€‹Column Press thresholds, including horizontal
+{0x64,0x00000403}, // â€‹â€‹number of columns Press
+{0x68,0x00000402}, // â€‹â€‹average incremental software
+{0x6c,0x00000001}, // â€‹â€‹gravity enabled
 {0x70,0x00000000},
 {0x74,0x00000000},
 {0x78,0x00000000},
-{0x7c,0x00000014},	//¸ĞÓ¦ÏßÉ¨Ãè¸öÊı£¬ÓÃpcÈí¼şÉú³É
+{0x7c,0x00000014}, // â€‹â€‹number of line scan sensor with pc software to generate
 {0xf0,0xfe},
 {0x00,0x00007f80},
 {0x04,0x00000000},
@@ -176,9 +176,9 @@ static const struct fw_data GSLX680_FW[] = {
 {0x78,0xfffffff0},
 {0x7c,0x00000000},
 {0xf0,0xff},
-//ÕâÒ»Ò³²»ÔÚĞ£Ñé·¶Î§
-{0x00,0x00000000},	//ËÀµãÖØµ÷¿ª¹Ø£¬0¹Ø£¬1¿ª
-{0x04,0x00000000},	//
+// This page is not in calibration range
+{0x00,0x00000000}, // â€‹â€‹dead weight transfer switch, 0 off, 1 open
+{0x04,0x00000000}, //
 {0x08,0x00000000},
 {0x0c,0x00000000},
 {0x10,0x00000000},
@@ -188,7 +188,7 @@ static const struct fw_data GSLX680_FW[] = {
 {0x20,0x00000000},
 {0x24,0x00000000},
 {0x28,0x00000000},
-{0x2c,0x00000001},	//·ÇÁã£¬±£Ö¤ÏÂÔØÓĞĞ§
+{0x2c,0x00000001}, // â€‹â€‹non-zero, to ensure effective download
 {0x30,0x00000000},
 {0x34,0x00000000},
 {0x38,0x00000000},
@@ -211,7 +211,7 @@ static const struct fw_data GSLX680_FW[] = {
 {0x7c,0x00000000},
 
 /*
-//ÕâÒ»Ò³ÊÇÓÃÀ´±£´æÄ£×éÅäÖÃ½çÃæÓÃµ½µÄÊı¾İ£¬Çı¶¯²»ÓÃ´¦Àí
+// This page is used to configure the interface module is used to save data, driving without treatment
 {0xf0,0xc0},
 {0x00,0x011f0018},
 {0x04,0x000000a4},
@@ -248,7 +248,7 @@ static const struct fw_data GSLX680_FW[] = {
 */
 
 /*
-//0xac~0xb5ÊÇ²âÊÔÊ±ÓÃµÄÏµÊı£¬Çı¶¯²»ÓÃ´¦Àí
+// 0xac ~ 0xb5 coefficient is used when testing the drive without treatment
 {0xf0,0xac},
 {0x00,0x0f920f5a},
 {0x04,0x0f920f88},
