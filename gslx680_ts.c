@@ -407,8 +407,16 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 	}
 	else
 	{
-		reset_chip(ts->client);
-		startup_chip(ts->client);
+		rc = reset_chip(ts->client);
+		if (rc < 0) {
+			dev_err(&ts->client->dev, "%s: reset_chip failed\n");
+			goto schedule;
+		}
+		rc = startup_chip(ts->client);
+		if (rc < 0) {
+			dev_err(&ts->client->dev, "%s: startup_chip failed\n");
+			goto schedule;
+		}
 	}
 	
 schedule:
