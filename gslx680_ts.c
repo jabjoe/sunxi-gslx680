@@ -18,8 +18,8 @@ static user_gpio_set_t gpio_int_info[1];
 #define GSL_STATUS_REG		0xe0
 #define GSL_PAGE_REG		0xf0
 
-#define MAX_FINGERS 		5
-#define MAX_CONTACTS 		5
+#define MAX_FINGERS 		10
+#define MAX_CONTACTS 		10
 
 #define CTP_IRQ_MODE			(NEGATIVE_EDGE)
 
@@ -409,12 +409,12 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 	{
 		rc = reset_chip(ts->client);
 		if (rc < 0) {
-			dev_err(&ts->client->dev, "%s: reset_chip failed\n");
+			dev_err(&ts->client->dev, "%s: reset_chip failed\n", __func__);
 			goto schedule;
 		}
 		rc = startup_chip(ts->client);
 		if (rc < 0) {
-			dev_err(&ts->client->dev, "%s: startup_chip failed\n");
+			dev_err(&ts->client->dev, "%s: startup_chip failed\n", __func__);
 			goto schedule;
 		}
 	}
@@ -669,7 +669,7 @@ MODULE_DEVICE_TABLE(i2c, gslx680_ts_id);
 static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 {
 	struct input_dev *input_device;
-	int i, rc = 0;
+	int rc = 0;
 	
 	printk("[GSLX680] Enter %s\n", __func__);
 
