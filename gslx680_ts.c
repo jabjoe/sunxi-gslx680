@@ -370,7 +370,7 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 
 	struct gsl_ts *ts = container_of(work, struct gsl_ts,work);
 
-	pr_info("---gsl_ts_xy_worker---\n");				 
+	//pr_info("---gsl_ts_xy_worker---\n");
 
 	if (ts->is_suspended == true) {
 		dev_dbg(&ts->client->dev, "TS is supended\n");
@@ -380,7 +380,7 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 
 	/* read data from DATA_REG */
 	rc = gsl_ts_read(ts->client, 0x80, ts->touch_data, ts->dd->data_size);
-	pr_info("---touches: %d ---\n",ts->touch_data[0]);		
+	//pr_info("---touches: %d ---\n",ts->touch_data[0]);
 		
 	if (rc < 0) 
 	{
@@ -398,7 +398,7 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 		dev_err(&ts->client->dev, "read 0xbc failed\n");
 		goto schedule;
 	}
-	pr_info("//////// reg %x : %x %x %x %x\n",0xbc, read_buf[3], read_buf[2], read_buf[1], read_buf[0]);
+	//pr_info("//////// reg %x : %x %x %x %x\n",0xbc, read_buf[3], read_buf[2], read_buf[1], read_buf[0]);
 		
 
 	if (read_buf[3] == 0 && read_buf[2] == 0 && read_buf[1] == 0 && read_buf[0] == 0)
@@ -641,7 +641,7 @@ static irqreturn_t gsl_ts_irq(int irq, void *dev_id)
 {	
 	struct gsl_ts *ts = dev_id;
 
-	pr_info("==========GSLX680 Interrupt============\n");			
+	//pr_info("==========GSLX680 Interrupt============\n");
 
 	if(ctp_judge_int_occur()){
 		pr_info("Other Interrupt\n");
