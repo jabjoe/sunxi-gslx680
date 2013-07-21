@@ -1058,8 +1058,13 @@ static int __devexit gslx680_ts_remove(struct i2c_client *client)
 	struct gsl_ts *ts = i2c_get_clientdata(client);
 	pr_info("==gslx680_ts_remove=\n");
 	
-	destroy_workqueue(ts->wq);
+	disable_irq_nosync(SW_INT_IRQNO_PIO);
+	cancel_work_sync(&ts->work);
+	free_irq(SW_INT_IRQNO_PIO, ts);
 	input_unregister_device(ts->input);
+	input_free_device(ts->input);
+	destroy_workqueue(ts->wq);
+
 	mutex_destroy(&ts->sus_lock);
 
 	//device_remove_file(&ts->input->dev, &dev_attr_debug_enable);
