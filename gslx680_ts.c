@@ -88,6 +88,7 @@ struct gsl_ts {
 	u8 prev_touches;
 	bool is_suspended;
 	bool int_pending;
+	bool is_inited;
 	struct mutex sus_lock;
 };
 
@@ -367,8 +368,10 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 {
 	int rc;
 	u8 read_buf[4] = {0};
-
 	struct gsl_ts *ts = container_of(work, struct gsl_ts,work);
+
+	if (!ts->is_inited)
+		goto schedule;
 
 	//pr_info("---gsl_ts_xy_worker---\n");
 
@@ -984,6 +987,8 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	int rc;
 
 	pr_info("====%s begin=====.  \n", __func__);
+	
+	
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(&client->dev, "I2C functionality not supported\n");
 		return -ENODEV;
@@ -993,6 +998,7 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (!ts)
 		return -ENOMEM;
 	pr_info("==kzalloc success=\n");
+	ts->is_inited = 0;
 
 	ts->client = client;
 	i2c_set_clientdata(client, ts);
@@ -1025,6 +1031,8 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "GSLX680 init gpio failed\n");
 	    goto error_mutex_destroy;
 	}
+	
+	ts->is_inited = 1;
 	
 	
 	pr_info("==%s over =\n", __func__);
