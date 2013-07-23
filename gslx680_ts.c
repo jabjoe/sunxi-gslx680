@@ -88,7 +88,6 @@ struct gsl_ts {
 	u8 prev_touches;
 	bool is_suspended;
 	bool int_pending;
-	bool is_inited;
 	struct mutex sus_lock;
 };
 
@@ -369,9 +368,6 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 	int rc;
 	u8 read_buf[4] = {0};
 	struct gsl_ts *ts = container_of(work, struct gsl_ts,work);
-
-	if (!ts->is_inited)
-		goto schedule;
 
 	//pr_info("---gsl_ts_xy_worker---\n");
 
@@ -738,13 +734,6 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 		pr_info("%s:ctp_set_irq_mode err.\n", __func__);
 		goto exit_set_irq_mode;
 	}
-	rc = request_irq(SW_INT_IRQNO_PIO, gsl_ts_irq, IRQF_TRIGGER_FALLING | IRQF_SHARED, "gslx680", ts);
-
-	if (rc < 0) {
-		dev_err(&client->dev, "gslx680_ts probe: request irq failed\n");
-		goto exit_irq_request_failed;
-	}
-
 
 	ts->wq = create_singlethread_workqueue("kworkqueue_ts");
 	if (!ts->wq) {
@@ -766,7 +755,6 @@ error_unreg_device:
 	destroy_workqueue(ts->wq);
 error_wq_create:
 	input_free_device(input_device);
-exit_irq_request_failed:
 exit_set_irq_mode:
 	//enable_irq(SW_INT_IRQNO_PIO);
 error_alloc_dev:
@@ -998,7 +986,6 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (!ts)
 		return -ENOMEM;
 	pr_info("==kzalloc success=\n");
-	ts->is_inited = 0;
 
 	ts->client = client;
 	i2c_set_clientdata(client, ts);
@@ -1031,9 +1018,12 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "GSLX680 init gpio failed\n");
 	    goto error_mutex_destroy;
 	}
-	
-	ts->is_inited = 1;
-	
+	rc = request_irq(SW_INT_IRQNO_PIO, gsl_ts_irq, IRQF_TRIGGER_FALLING | IRQF_SHARED, "gslx680", ts);
+
+	if (rc < 0) {
+		dev_err(&client->dev, "gslx680_ts probe: request irq failed\n");
+		goto error_mutex_destroy;
+	}
 	
 	pr_info("==%s over =\n", __func__);
 	return 0;
