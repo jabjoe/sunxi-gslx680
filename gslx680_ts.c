@@ -234,7 +234,7 @@ static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
 {
 	swap(x, y);
 
-	pr_info("#####id=%d,x=%d,y=%d######\n",id,x,y);
+	//pr_info("#####id=%d,x=%d,y=%d######\n",id,x,y);
 
 	if(x>=SCREEN_MAX_X||y>=SCREEN_MAX_Y)
 	{
@@ -261,9 +261,14 @@ static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
 	input_report_abs(ts->input, ABS_MT_POSITION_Y, y);	
 	input_report_abs(ts->input, ABS_MT_WIDTH_MAJOR, 1);
 #else
+	input_report_abs(ts->input, ABS_X, x);
+	input_report_abs(ts->input, ABS_Y, y);
+	input_report_abs(ts->input, ABS_PRESSURE, pressure);
+	input_report_key(ts->input, BTN_TOUCH, 1);
+
 	input_report_abs(ts->input, ABS_MT_TRACKING_ID, id);
 	input_report_abs(ts->input, ABS_MT_TOUCH_MAJOR, pressure);
-	input_report_abs(ts->input, ABS_MT_POSITION_X,x);
+	input_report_abs(ts->input, ABS_MT_POSITION_X, x);
 	input_report_abs(ts->input, ABS_MT_POSITION_Y, y);
 	input_report_abs(ts->input, ABS_MT_WIDTH_MAJOR, 1);
 	input_mt_sync(ts->input);
@@ -283,21 +288,25 @@ static void process_gslX680_data(struct gsl_ts *ts)
 			id_sign[i] = 0;	
 		id_state_flag[i] = 0;
 	}
-	for(i= 0;i < (touches > MAX_FINGERS ? MAX_FINGERS : touches);i ++)
-	{
-		x = join_bytes( ( ts->touch_data[ts->dd->x_index  + 4 * i + 1] & 0xf),
-				ts->touch_data[ts->dd->x_index + 4 * i]);
-		y = join_bytes(ts->touch_data[ts->dd->y_index + 4 * i + 1],
-				ts->touch_data[ts->dd->y_index + 4 * i ]);
-		id = ts->touch_data[ts->dd->id_index + 4 * i] >> 4;
-
-		if(1 <=id && id <= MAX_CONTACTS)
+	
+	if (touches == 0)
+		input_report_key(ts->input, BTN_TOUCH, 0);
+	else
+		for(i= 0;i < (touches > MAX_FINGERS ? MAX_FINGERS : touches);i ++)
 		{
-			record_point(x, y , id);
-			report_data(ts, x_new, y_new, 10, id);		
-			id_state_flag[id] = 1;
+			x = join_bytes( ( ts->touch_data[ts->dd->x_index  + 4 * i + 1] & 0xf),
+					ts->touch_data[ts->dd->x_index + 4 * i]);
+			y = join_bytes(ts->touch_data[ts->dd->y_index + 4 * i + 1],
+					ts->touch_data[ts->dd->y_index + 4 * i ]);
+			id = ts->touch_data[ts->dd->id_index + 4 * i] >> 4;
+
+			if(1 <=id && id <= MAX_CONTACTS)
+			{
+				record_point(x, y , id);
+				report_data(ts, x_new, y_new, 10, id);
+				id_state_flag[id] = 1;
+			}
 		}
-	}
 	for(i=1;i<=MAX_CONTACTS;i++)
 	{	
 		if( (0 == touches) || ((0 != id_state_old_flag[i]) && (0 == id_state_flag[i])) )
@@ -380,7 +389,7 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 	/* read data from DATA_REG */
 	rc = gsl_ts_read(ts->client, 0x80, ts->touch_data, ts->dd->data_size);
 	//pr_info("---touches: %d ---\n",ts->touch_data[0]);
-		
+
 	if (rc < 0) 
 	{
 		dev_err(&ts->client->dev, "read failed\n");
@@ -397,7 +406,6 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 		dev_err(&ts->client->dev, "read 0xbc failed\n");
 		goto schedule;
 	}
-	//pr_info("//////// reg %x : %x %x %x %x\n",0xbc, read_buf[3], read_buf[2], read_buf[1], read_buf[0]);
 		
 
 	if (read_buf[3] == 0 && read_buf[2] == 0 && read_buf[1] == 0 && read_buf[0] == 0)
@@ -710,7 +718,21 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 	input_set_abs_params(input_device,ABS_MT_TRACKING_ID, 0, (MAX_CONTACTS+1), 0, 0);
 	set_bit(EV_ABS, input_device->evbit);
 	set_bit(EV_KEY, input_device->evbit);
+	
 #endif
+
+	set_bit(ABS_X, input_device->absbit);
+	set_bit(ABS_Y, input_device->absbit);
+	set_bit(ABS_PRESSURE, input_device->absbit);
+	set_bit(BTN_TOUCH, input_device->keybit);
+
+	input_set_abs_params(input_device,
+			ABS_X, 0, SCREEN_MAX_X, 0, 0);
+	input_set_abs_params(input_device,
+			ABS_Y, 0, SCREEN_MAX_Y, 0, 0);
+	input_set_abs_params(input_device,
+			ABS_PRESSURE, 0, PRESS_MAX, 0 , 0);
+
 
 #ifdef HAVE_TOUCH_KEY
 	input_device->evbit[0] = BIT_MASK(EV_KEY);
@@ -1018,6 +1040,7 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		dev_err(&client->dev, "GSLX680 init gpio failed\n");
 	    goto error_mutex_destroy;
 	}
+	
 	rc = request_irq(SW_INT_IRQNO_PIO, gsl_ts_irq, IRQF_TRIGGER_FALLING | IRQF_SHARED, "gslx680", ts);
 
 	if (rc < 0) {
