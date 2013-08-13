@@ -1,0 +1,89 @@
+#! /usr/bin/python
+
+#request_firmware
+
+import sys
+import os
+
+
+def get_word_value(f):
+    t = f.read(4)
+    if len(t) != 4:
+        return 0
+    return (ord(t[3]) << 24) | (ord(t[2]) << 16) | (ord(t[1]) << 8) | ord(t[0])
+
+
+def is_register(f, register, value):
+    reg = get_word_value(f)
+    if reg != register:
+        return False
+    word = get_word_value(f)
+    return value is None or word == value
+
+
+def is_sequence(f):
+    if (is_register(f, 0x0, None) and
+       is_register(f, 0x4, None) and
+       is_register(f, 0x8, None) and
+       is_register(f, 0xc, None) and
+       is_register(f, 0x10, None) and
+       is_register(f, 0x14, None) and
+       is_register(f, 0x18, None)):
+        reg = 0x18
+        next_reg = get_word_value(f)
+        f.seek(4, 1)
+        length = 8
+        while next_reg > reg and reg != 0x7c:
+            length += 1
+            reg = next_reg
+            next_reg = get_word_value(f)
+            f.seek(4, 1)
+        f.seek(-8, 1)
+        if reg == 0x7c:
+            return True
+    return False
+
+
+def find_sequence(f):
+    pos_start = 0
+    pos_end = 0
+    page_count = 0
+    f.seek(0, 2)
+    size = f.tell()
+    f.seek(0)
+    while f.tell() < size:
+        pos_start = f.tell()
+        pos_end = pos_start
+        page_count = 0
+        if is_register(f, 0xf0, 0xfa) and is_sequence(f):
+            print "firmware start found at 0x%x\n" % pos_start
+            reg = get_word_value(f)
+            page = get_word_value(f)
+            while reg == 0xf0 and page < 256:
+                page_count += 1
+                if not is_sequence(f):
+                    break
+                reg = get_word_value(f)
+                page = get_word_value(f)
+            f.seek(-8, 1)
+            pos_end = f.tell()
+            break
+    print "page count", page_count
+    print "size", pos_end - pos_start
+    return pos_start, pos_end
+
+
+f = open(sys.argv[1], "rb")
+f2 = open(sys.argv[2], "wb")
+
+fw_start, fw_end = find_sequence(f)
+
+f.seek(fw_start)
+
+fw = f.read(fw_end-fw_start)
+
+f2.write(fw)
+
+
+
+
