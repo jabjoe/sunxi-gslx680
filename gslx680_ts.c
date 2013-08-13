@@ -27,11 +27,14 @@ static user_gpio_set_t gpio_int_info[1];
 
 #define GSLX680_I2C_NAME "gslx680"
 
+#define IRQ_PORT			SW_INT_IRQNO_PIO
+
+
 #define GSL_DATA_REG		0x80
 #define GSL_STATUS_REG		0xe0
 #define GSL_PAGE_REG		0xf0
 
-
+#define PRESS_MAX    		255
 #define MAX_FINGERS 		10
 #define MAX_CONTACTS 		10
 #define DMA_TRANS_LEN		0x20
@@ -106,6 +109,7 @@ struct gsl_ts {
 	bool is_suspended;
 	bool int_pending;
 	struct mutex sus_lock;
+	int irq;
 };
 
 static u32 id_sign[MAX_CONTACTS+1] = {0};
@@ -121,19 +125,12 @@ static int screen_max_x = 0;
 static int screen_max_y = 0;
 #define SCREEN_MAX_X			(screen_max_x)
 #define SCREEN_MAX_Y			(screen_max_y)
-#define PRESS_MAX    			255
 static int revert_x_flag = 0;
 static int revert_y_flag = 0;
 static int exchange_x_y_flag = 0;
 static int	int_cfg_addr[]={PIO_INT_CFG0_OFFSET,PIO_INT_CFG1_OFFSET,
 			PIO_INT_CFG2_OFFSET, PIO_INT_CFG3_OFFSET};
 
-
-static union{
-	unsigned short dirty_addr_buf[2];
-	const unsigned short normal_i2c[2];
-} u_i2c_addr = {{0x00},};
-static __u32 twi_id = 0;
 
 
 static u8 gpio_init_status = 0;
@@ -660,7 +657,7 @@ static void gsl_ts_xy_worker(struct work_struct *work)
 	}
 	
 schedule:
-	enable_irq(SW_INT_IRQNO_PIO);
+	enable_irq(ts->irq);
 		
 }
 
@@ -691,7 +688,7 @@ static irqreturn_t gsl_ts_irq(int irq, void *dev_id)
 	if (ts->is_suspended == true) 
 		return IRQ_HANDLED;	
 		
-	disable_irq_nosync(SW_INT_IRQNO_PIO);
+	disable_irq_nosync(ts->irq);
 	if (!work_pending(&ts->work)) 
 	{
 		queue_work(ts->wq, &ts->work);
@@ -699,6 +696,13 @@ static irqreturn_t gsl_ts_irq(int irq, void *dev_id)
 		
 	return IRQ_HANDLED;
 }
+
+
+static union{
+	unsigned short dirty_addr_buf[2];
+	const unsigned short normal_i2c[2];
+} u_i2c_addr = {{0x00},};
+static __u32 twi_id = 0;
 
 /*
  * It sucks this is duplicated for each driver right now.
@@ -983,6 +987,8 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 	input_set_abs_params(input_device,ABS_MT_TOUCH_MAJOR, 0, PRESS_MAX, 0, 0);
 	input_set_abs_params(input_device,ABS_MT_WIDTH_MAJOR, 0, 200, 0, 0);
 
+	client->irq = IRQ_PORT;
+	ts->irq = client->irq;
 
 	rc = ctp_set_irq_mode("ctp_para", "ctp_int_port", CTP_IRQ_MODE);
 	if(0 != rc){
@@ -1003,27 +1009,18 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 	if (rc)
 		goto error_unreg_device;
 
-	client->irq = SW_INT_IRQNO_PIO;
-
 	return 0;
+
 error_unreg_device:
 	destroy_workqueue(ts->wq);
 error_wq_create:
 	input_free_device(input_device);
 exit_set_irq_mode:
-	//enable_irq(SW_INT_IRQNO_PIO);
+	enable_irq(IRQ_PORT);
 error_alloc_dev:
 	kfree(ts->touch_data);
 	return rc;
 }
-
-
-
-
-
-
-
-
 
 
 static int
@@ -1077,7 +1074,7 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	    goto error_mutex_destroy;
 	}
 	
-	rc = request_irq(SW_INT_IRQNO_PIO, gsl_ts_irq, IRQF_TRIGGER_FALLING | IRQF_SHARED, "gslx680", ts);
+	rc = request_irq(client->irq, gsl_ts_irq, IRQF_TRIGGER_FALLING | IRQF_SHARED, "gslx680", ts);
 
 	if (rc < 0) {
 		dev_err(&client->dev, "gslx680_ts probe: request irq failed\n");
@@ -1115,9 +1112,9 @@ static int __devexit gslx680_ts_remove(struct i2c_client *client)
 	struct gsl_ts *ts = i2c_get_clientdata(client);
 	pr_info("==gslx680_ts_remove=\n");
 	
-	disable_irq_nosync(SW_INT_IRQNO_PIO);
+	disable_irq_nosync(ts->irq);
 	cancel_work_sync(&ts->work);
-	free_irq(SW_INT_IRQNO_PIO, ts);
+	free_irq(ts->irq, ts);
 	input_unregister_device(ts->input);
 	input_free_device(ts->input);
 	destroy_workqueue(ts->wq);
