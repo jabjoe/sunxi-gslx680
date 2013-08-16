@@ -14,7 +14,7 @@
 #include "ctp_platform_ops.h"
 
 #include <plat/sys_config.h>
-#include "gslx680_ts.h"
+#include <linux/firmware.h>
 
 static void* __iomem gpio_addr = NULL;
 static int gpio_int_hdle = 0;
@@ -22,6 +22,10 @@ static int gpio_wakeup_hdle = 0;
 static int gpio_io_hdle = 0;
 
 static user_gpio_set_t gpio_int_info[1];
+
+static char gsl_firmware[64] = {0};
+
+
 #define CTP_IRQ_NO			(gpio_int_info[0].port_num)
 #define CTP_IRQ_MODE			(NEGATIVE_EDGE)
 
@@ -208,31 +212,40 @@ static int gsl_load_fw(struct i2c_client *client)
 	u8 buf[DMA_TRANS_LEN*4 + 1] = {0};
 	u8 send_flag = 1;
 	u8 *cur = buf + 1;
-	u32 source_line = 0;
-	u32 source_len = ARRAY_SIZE(GSLX680_FW);
+	const struct firmware *fw = NULL;
+	size_t i;
 	int rc;
 
 	printk("=============gsl_load_fw start==============\n");
 
-	for (source_line = 0; source_line < source_len; source_line++) 
+	rc = request_firmware(&fw, gsl_firmware, &client->dev);
+	if (rc)
 	{
-		/* init page trans, set the page val */
-		if (GSL_PAGE_REG == GSLX680_FW[source_line].offset)
+		dev_err(&client->dev, "Unable to open firmware %s\n", gsl_firmware);
+		return rc;
+	}
+
+	for(i=0; i < fw->size; i+=8)
+	{
+		u32 *reg = (u32*)&(fw->data[i]);
+		u32 *value = (u32*)&(fw->data[i + 4]);
+
+		fw2buf(cur, value);
+
+		if (*reg == GSL_PAGE_REG)
 		{
-			fw2buf(cur, &GSLX680_FW[source_line].val);
 			rc = gsl_write_interface(client, GSL_PAGE_REG, buf, 4);
-			if (rc < 0) {
+			if (rc < 0)
+            {
 				pr_info("%s: gsl_write_interface failed. \n", __func__);
-				return rc;
+				goto error;
 			}
 			send_flag = 1;
-		}
-		else 
-		{
+        }
+        else {
 			if (1 == send_flag % (DMA_TRANS_LEN < 0x20 ? DMA_TRANS_LEN : 0x20))
-	    			buf[0] = (u8)GSLX680_FW[source_line].offset;
+					buf[0] = (u8)*reg;
 
-			fw2buf(cur, &GSLX680_FW[source_line].val);
 			cur += 4;
 
 			if (0 == send_flag % (DMA_TRANS_LEN < 0x20 ? DMA_TRANS_LEN : 0x20)) 
@@ -240,7 +253,7 @@ static int gsl_load_fw(struct i2c_client *client)
 	    			rc = gsl_write_interface(client, buf[0], buf, cur - buf - 1);
 					if (rc < 0) {
 						pr_info("%s: gsl_write_interface failed. \n", __func__);
-						return rc;
+                        goto error;
 					}
 	    			cur = buf + 1;
 			}
@@ -250,7 +263,11 @@ static int gsl_load_fw(struct i2c_client *client)
 	}
 
 	printk("=============gsl_load_fw end==============\n");
-	return 0;
+
+error:
+	release_firmware(fw);
+
+	return rc;
 }
 
 
@@ -706,6 +723,7 @@ static __u32 twi_id = 0;
 
 /*
  * It sucks this is duplicated for each driver right now.
+ * What would be better is a function that takes an array of parameter names, type of fetch, and pointer + size for result.
 */
 static int _fetch_sysconfig_para(void)
 {
@@ -738,6 +756,12 @@ static int _fetch_sysconfig_para(void)
 		//ret = 1;
 		return ret;
 	}
+
+	if(SCRIPT_PARSER_OK != script_parser_fetch_ex("ctp_para", "ctp_firmware", (int *)(&gsl_firmware), &type, sizeof(gsl_firmware)/sizeof(int))){
+		pr_err("%s: script_parser_fetch err. \n", name);
+		goto script_parser_fetch_err;
+	}
+	pr_info("%s firmware %s. \n", name, gsl_firmware);
 
 	if(SCRIPT_PARSER_OK != script_parser_fetch("ctp_para", "ctp_twi_addr", &twi_addr, sizeof(twi_addr)/sizeof(__u32))){
 		pr_err("%s: script_parser_fetch err. \n", name);
