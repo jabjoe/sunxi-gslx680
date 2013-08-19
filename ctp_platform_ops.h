@@ -1,1 +1,0 @@
-../linux-sunxi/drivers/input/touchscreen/ctp_platform_ops.h
