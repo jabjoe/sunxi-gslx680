@@ -456,36 +456,6 @@ static int init_chip(struct i2c_client *client)
 	return 0;
 }
 
-static int check_mem_data_init(struct i2c_client *client)
-{
-	char write_buf;
-	char read_buf[4]  = {0};
-	int rc;
-	msleep(30);
-	write_buf = 0x00;
-	rc = gsl_ts_write(client,0xf0, &write_buf, sizeof(write_buf));
-	if (rc < 0) {
-		pr_info("%s: gsl_ts_write fail: %i\n", __func__, rc);
-		return rc;
-	}
-	rc = gsl_ts_read(client,0x00, read_buf, sizeof(read_buf));
-	if (rc < 0) {
-		pr_info("%s: gsl_ts_read 1 fail: %i\n", __func__, rc);
-		return rc;
-	}
-	rc = gsl_ts_read(client,0x00, read_buf, sizeof(read_buf));
-	if (rc < 0) {
-		pr_info("%s: gsl_ts_read 2 fail: %i\n", __func__, rc);
-		return rc;
-	}
-	if (read_buf[3] != 0x1 || read_buf[2] != 0 || read_buf[1] != 0 || read_buf[0] != 0)
-	{
-		pr_info("!!!!!!!!!!!page: %x offset: %x val: %x %x %x %x\n",0x0, 0x0, read_buf[3], read_buf[2], read_buf[1], read_buf[0]);
-		return -1;
-	}
-	
-	return 0;
-}
 
 static void record_point(u16 x, u16 y , u8 id)
 {
@@ -1140,11 +1110,6 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (rc < 0) {
 		dev_err(&client->dev, "init_chip failed\n");
 		goto error_mutex_destroy;
-	}
-	
-	if (check_mem_data_init(ts->client) == -1) {
-		dev_err(&client->dev, "GSLX680 init gpio failed\n");
-	    goto error_mutex_destroy;
 	}
 	
 	rc = request_irq(client->irq, gsl_ts_irq, IRQF_TRIGGER_FALLING | IRQF_SHARED, "gslx680", ts);
