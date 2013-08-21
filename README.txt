@@ -3,7 +3,7 @@ About
 
 This is a gslx680 driver for the sunxi (AllWinner) platform.
 The aim is to make the gslx680 usable with a GNU/Linux build.
-The Android build has not been removed, but it not been tested.
+The Android build has not been removed, but it has not been tested.
 
 The source was originally from:
 
@@ -15,15 +15,17 @@ It has been:
 
 * Ported to the sunxi platform (AllWinner).
 * Changed to load firmware from a separate file.
-* Given extracted firmware from a Android driver of a 7inch A13 tablet.
-* Added normal single point, touch along side the existing multi touch.
+* Given extracted firmware from an Android driver for a 7inch A13
+  tablet.
+* Modified to also support normal single point touch alongside the
+  existing multi touch.
 
 
 Firmware Instructions
 =====================
 
 The firmware included is from a 7inch tablet with a 800x480 screen.
-If this is does not match you tablet, you will need to extract the 
+If this is does not match your tablet, you will need to extract the
 firmware from the existing Android tablet.
 
 It will be under a path like:
@@ -32,8 +34,8 @@ It will be under a path like:
 Copy this to a SD card or use a GNU/Linux chroot to scp it over, or use
 adb pull.
 
-On your build machine, on the command line use the script
-'firmware/fw_extractor' to extract the firmware to it's own file.
+On your build machine, on the command line, use the script
+'firmware/fw_extractor' to extract the firmware to its own file.
 
 ./firmware/fw_extractor my_android_gslx680.ko my_tablets.fw
 
@@ -41,10 +43,11 @@ On your build machine, on the command line use the script
 Build Instructions
 ==================
 
-Open the file Makefile in your text edit of choice. Change the second
-line, the KDIR variable to the build folder of your kernel.
+Open the file Makefile in your text editor of choice. Change the second
+line, the KDIR variable, to the build folder of your kernel.
 
-On the command line, build the module with just:
+Ensuring you have your armhf cross compiling folder in PATH (for gcc),
+on the command line, build the module with the command:
 
 make
 
@@ -64,9 +67,9 @@ ctp_twi_id = 1
 ctp_twi_addr = 0x40
 
 On some devices the driver is a hack and isn't using the fex system
-properly. Or doing some unknown interaction with semi documented autotp
-sections. So the matching parameters in ctp_para may have different
-values.
+properly or is doing some unknown interaction with semi documented
+autotp sections. So the matching parameters in ctp_para may have
+different values.
 
 
 Add the line:
