@@ -61,7 +61,10 @@ typedef enum{
 #define PIO_INT_CTRL_OFFSET          (0x210)
 
 //======== End of when in tree use ctp_platform_ops.h instead ==========
-
+#ifdef CONFIG_HAS_EARLYSUSPEND
+    #include <linux/pm.h>
+    #include <linux/earlysuspend.h>
+#endif
 #include <plat/sys_config.h>
 #include <linux/firmware.h>
 
@@ -163,6 +166,12 @@ struct gsl_ts {
     bool int_pending;
     struct mutex sus_lock;
     int irq;
+#if defined(CONFIG_HAS_EARLYSUSPEND)
+    struct early_suspend early_suspend;
+#endif
+#ifdef GSL_TIMER
+    struct timer_list gsl_timer;
+#endif
 };
 
 static u32 id_sign[MAX_CONTACTS+1] = {0};
@@ -567,9 +576,13 @@ static void process_gslX680_data(struct gsl_ts *ts)
         id_state_flag[i] = 0;
     }
 
+#ifndef REPORT_DATA_ANDROID_4_0
     if (touches == 0)
         input_report_key(ts->input, BTN_TOUCH, 0);
     else
+#else
+    if (touches != 0)
+#endif
         for(i= 0;i < (touches > MAX_FINGERS ? MAX_FINGERS : touches);i ++) {
             x = join_bytes( ( ts->touch_data[ts->dd->x_index  + 4 * i + 1] & 0xf),
                     ts->touch_data[ts->dd->x_index + 4 * i]);
@@ -694,6 +707,24 @@ static irqreturn_t gsl_ts_irq(int irq, void *dev_id)
    
     return IRQ_HANDLED;
 }
+
+
+#ifdef GSL_TIMER
+static void gsl_timer_handle(unsigned long data)
+{
+    struct gsl_ts *ts = (struct gsl_ts *)data;
+
+#ifdef GSL_DEBUG
+    printk("----------------gsl_timer_handle-----------------\n");
+#endif
+
+    disable_irq_nosync(ts->irq);
+    check_mem_data(ts->client);
+    ts->gsl_timer.expires = jiffies + 3 * HZ;
+    add_timer(&ts->gsl_timer);
+    enable_irq(ts->irq);
+}
+#endif
 
 
 static union{
@@ -957,7 +988,6 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
     input_set_abs_params(input_device,ABS_MT_TRACKING_ID, 0, (MAX_CONTACTS+1), 0, 0);
     set_bit(EV_ABS, input_device->evbit);
     set_bit(EV_KEY, input_device->evbit);
-#endif
 
     set_bit(ABS_X, input_device->absbit);
     set_bit(ABS_Y, input_device->absbit);
@@ -970,6 +1000,7 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
             ABS_Y, 0, SCREEN_MAX_Y, 0, 0);
     input_set_abs_params(input_device,
             ABS_PRESSURE, 0, PRESS_MAX, 0 , 0);
+#endif
 
 
 #ifdef HAVE_TOUCH_KEY
@@ -1023,6 +1054,69 @@ error_alloc_dev:
     return rc;
 }
 
+static int gsl_ts_suspend(struct i2c_client *client, pm_message_t mesg)
+{
+    struct gsl_ts *ts = i2c_get_clientdata(client);
+
+    printk("I'am in gsl_ts_suspend() start\n");
+    ts->is_suspended = true;
+
+#ifdef GSL_TIMER
+    printk( "gsl_ts_suspend () : delete gsl_timer\n");
+
+    del_timer(&ts->gsl_timer);
+#endif
+    disable_irq_nosync(ts->irq);
+
+    reset_chip(ts->client);
+    gslX680_shutdown_low();
+    msleep(10);
+
+    return 0;
+}
+
+static int gsl_ts_resume(struct i2c_client *client)
+{
+    struct gsl_ts *ts = i2c_get_clientdata(client);
+
+    printk("I'am in gsl_ts_resume() start\n");
+
+    gslX680_shutdown_high();
+    msleep(20);
+    reset_chip(ts->client);
+    startup_chip(ts->client);
+
+#ifdef GSL_TIMER
+    printk( "gsl_ts_resume () : add gsl_timer\n");
+
+    init_timer(&ts->gsl_timer);
+    ts->gsl_timer.expires = jiffies + 3 * HZ;
+    ts->gsl_timer.function = &gsl_timer_handle;
+    ts->gsl_timer.data = (unsigned long)ts;
+    add_timer(&ts->gsl_timer);
+#endif
+
+    enable_irq(ts->irq);
+    ts->is_suspended = false;
+
+    return 0;
+}
+
+#ifdef CONFIG_HAS_EARLYSUSPEND
+static void gsl_ts_early_suspend(struct early_suspend *h)
+{
+    struct gsl_ts *ts = container_of(h, struct gsl_ts, early_suspend);
+    printk("[GSL1680] Enter %s\n", __func__);
+    gsl_ts_suspend(&ts->client->dev);
+}
+
+static void gsl_ts_late_resume(struct early_suspend *h)
+{
+    struct gsl_ts *ts = container_of(h, struct gsl_ts, early_suspend);
+    printk("[GSL1680] Enter %s\n", __func__);
+    gsl_ts_resume(&ts->client->dev);
+}
+#endif
 
 static int
 gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -1077,6 +1171,23 @@ gslx680_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
         goto error_mutex_destroy;
     }
 
+#ifdef GSL_TIMER
+    printk( "gsl_ts_probe () : add gsl_timer\n");
+
+    init_timer(&ts->gsl_timer);
+    ts->gsl_timer.expires = jiffies + 3 * HZ;   //¶¨Ê±3  ÃëÖÓ
+    ts->gsl_timer.function = &gsl_timer_handle;
+    ts->gsl_timer.data = (unsigned long)ts;
+    add_timer(&ts->gsl_timer);
+#endif
+
+#ifdef CONFIG_HAS_EARLYSUSPEND
+    ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
+    ts->early_suspend.suspend = gsl_ts_early_suspend;
+    ts->early_suspend.resume = gsl_ts_late_resume;
+    register_early_suspend(&ts->early_suspend);
+#endif
+
     pr_info("==%s over =\n", __func__);
     return 0;
 error_mutex_destroy:
@@ -1107,6 +1218,11 @@ static int __devexit gslx680_ts_remove(struct i2c_client *client)
     struct gsl_ts *ts = i2c_get_clientdata(client);
     pr_info("==gslx680_ts_remove=\n");
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
+    unregister_early_suspend(&ts->early_suspend);
+#endif
+    device_init_wakeup(&client->dev, 0);
+
     disable_irq_nosync(ts->irq);
     cancel_work_sync(&ts->work);
     free_irq(ts->irq, ts);
@@ -1133,6 +1249,10 @@ static struct i2c_driver gslx680_ts_driver = {
         .name   = GSLX680_I2C_NAME,
         .owner  = THIS_MODULE,
     },
+#ifndef CONFIG_HAS_EARLYSUSPEND
+    .suspend    = gsl_ts_suspend,
+    .resume     = gsl_ts_resume,
+#endif
     .address_list   = u_i2c_addr.normal_i2c,
     .detect         = ctp_detect
 };
