@@ -18,7 +18,7 @@ def get_word_value(f):
             | ord(t[0]))
 
 
-def is_register(f, register, value):
+def is_register(f, register, value=None):
     reg = get_word_value(f)
     if reg != register:
         return False
@@ -27,52 +27,51 @@ def is_register(f, register, value):
 
 
 def is_sequence(f):
-    if (is_register(f, 0x0, None) and
-       is_register(f, 0x4, None) and
-       is_register(f, 0x8, None) and
-       is_register(f, 0xc, None) and
-       is_register(f, 0x10, None) and
-       is_register(f, 0x14, None) and
-       is_register(f, 0x18, None)):
+    if (is_register(f, 0x00) and
+       is_register(f, 0x04) and
+       is_register(f, 0x08) and
+       is_register(f, 0x0c) and
+       is_register(f, 0x10) and
+       is_register(f, 0x14) and
+       is_register(f, 0x18)):
         reg = 0x18
         next_reg = get_word_value(f)
         f.seek(4, 1)
         length = 8
-        while next_reg > reg and reg != 0x7c:
+        while next_reg > reg and next_reg < 256 and next_reg != 0xf0:
             length += 1
             reg = next_reg
             next_reg = get_word_value(f)
             f.seek(4, 1)
         f.seek(-8, 1)
-        if reg == 0x7c:
-            return True
+        return True
     return False
 
 
-def find_sequence(f):
+def find_sequence(f, f_end):
     pos_start = 0
     pos_end = 0
     page_count = 0
-    f.seek(0, 2)
-    size = f.tell()
-    f.seek(0)
-    while f.tell() < size:
+    while f.tell() < f_end:
         pos_start = f.tell()
         pos_end = pos_start
         page_count = 0
-        if is_register(f, 0xf0, 0xfa) and is_sequence(f):
+        if is_register(f, 0xf0) and is_sequence(f):
             print "firmware start found at 0x%x\n" % pos_start
+            pos_end = f.tell()
             reg = get_word_value(f)
             page = get_word_value(f)
+            page_count = 1
             while reg == 0xf0 and page < 256:
                 page_count += 1
                 if not is_sequence(f):
                     break
+                pos_end = f.tell()
                 reg = get_word_value(f)
                 page = get_word_value(f)
-            f.seek(-8, 1)
-            pos_end = f.tell()
             break
+    if page_count == 0:
+        return 0, 0
     print "page count", page_count
     print "size", pos_end - pos_start
     return pos_start, pos_end
@@ -83,12 +82,28 @@ if len(sys.argv) < 3:
     exit(1)
 
 f = open(sys.argv[1], "rb")
-f2 = open(sys.argv[2], "wb")
 
-fw_start, fw_end = find_sequence(f)
+f.seek(0, 2)
+size = f.tell()
+f.seek(0)
 
-f.seek(fw_start)
+ext = ""
 
-fw = f.read(fw_end - fw_start)
+while f.tell() < size:
+    fw_start, fw_end = find_sequence(f, size)
+    if fw_start == fw_end:
+        break
 
-f2.write(fw)
+    f.seek(fw_start)
+    fw = f.read(fw_end - fw_start)
+
+    f2 = open(sys.argv[2] + ext, "wb")
+    f2.write(fw)
+    f2.close()
+
+    f.seek(fw_end)
+    ext += '.x'
+
+
+
+
