@@ -1,3 +1,6 @@
+// This is a cut down version of the ctp_platform_ops.h in sunxi.
+// Remove when putting gslx680 back in tree.
+
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/delay.h>
