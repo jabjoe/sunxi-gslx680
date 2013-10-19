@@ -324,24 +324,31 @@ static int startup_chip(struct i2c_client *client)
 }
 
 
+
 static int reset_chip(struct i2c_client *client)
 {
     u8 buf[4] = {0x00};
     u8 tmp = 0x88;
     int rc = gsl_ts_write(client, 0xe0, &tmp, sizeof(tmp));
-    if (rc < 0)
+    if (rc < 0) {
+        printk("%s: gsl_ts_write 1 fail!\n", __func__);
         return rc;
+    }
     msleep(10);
 
     tmp = 0x04;
     rc = gsl_ts_write(client, 0xe4, &tmp, sizeof(tmp));
-    if (rc < 0)
+    if (rc < 0) {
+        printk("%s: gsl_ts_write 2 fail!\n", __func__);
         return rc;
+    }
     msleep(10);
 
     rc = gsl_ts_write(client, 0xbc, buf, sizeof(buf));
-    if (rc < 0)
+    if (rc < 0) {
+        printk("%s: gsl_ts_write 3 fail!\n", __func__);
         return rc;
+    }
     msleep(10);
 
     return 0;
