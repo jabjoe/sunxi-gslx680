@@ -502,7 +502,6 @@ static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
 
     input_mt_slot(ts->input, id);
     input_mt_report_slot_state(ts->input, MT_TOOL_FINGER, 1);
-    input_report_abs(ts->input, ABS_MT_TRACKING_ID, id);
     input_report_abs(ts->input, ABS_MT_TOUCH_MAJOR, pressure);
     input_report_abs(ts->input, ABS_MT_POSITION_X, x);
     input_report_abs(ts->input, ABS_MT_POSITION_Y, y);
@@ -538,7 +537,7 @@ static void process_gslX680_data(struct gsl_ts *ts)
     for(i=1;i<=MAX_CONTACTS;i++) {
         if ((0 != id_state_old_flag[i]) && (0 == id_state_flag[i])) {
             input_mt_slot(ts->input, i);
-            input_report_abs(ts->input, ABS_MT_TRACKING_ID, -1);
+            input_mt_report_slot_state(ts->input, MT_TOOL_FINGER, false);
             id_sign[i]=0;
         }
         id_state_old_flag[i] = id_state_flag[i];
@@ -923,7 +922,6 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 
     set_bit(EV_ABS, input_device->evbit);
     set_bit(EV_KEY, input_device->evbit);
-    set_bit(EV_REP, input_device->evbit);
     set_bit(EV_SYN, input_device->evbit);
 
     set_bit(ABS_X,          input_device->absbit);
@@ -936,7 +934,6 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
     set_bit(ABS_MT_WIDTH_MAJOR, input_device->absbit);
 
     set_bit(BTN_TOUCH, input_device->keybit);
-    set_bit(BTN_TOOL_FINGER, input_device->keybit);
 
     set_bit(BTN_TOOL_DOUBLETAP, input_device->keybit);
     set_bit(BTN_TOOL_TRIPLETAP, input_device->keybit);
