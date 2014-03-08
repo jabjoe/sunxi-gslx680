@@ -500,14 +500,13 @@ static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
     if (revert_y_flag)
         y=SCREEN_MAX_Y-y;
 
-    input_mt_slot(ts->input, id);  
-    input_mt_report_slot_state(ts->input, MT_TOOL_FINGER, true);
-
+    input_mt_slot(ts->input, id);
+    input_mt_report_slot_state(ts->input, MT_TOOL_FINGER, 1);
+    input_report_abs(ts->input, ABS_MT_TRACKING_ID, id);
     input_report_abs(ts->input, ABS_MT_TOUCH_MAJOR, pressure);
     input_report_abs(ts->input, ABS_MT_POSITION_X, x);
     input_report_abs(ts->input, ABS_MT_POSITION_Y, y);
     input_report_abs(ts->input, ABS_MT_WIDTH_MAJOR, 1);
-    input_mt_sync(ts->input);
 }
 
 static void process_gslX680_data(struct gsl_ts *ts)
@@ -537,16 +536,14 @@ static void process_gslX680_data(struct gsl_ts *ts)
         }
     }
     for(i=1;i<=MAX_CONTACTS;i++) {
-        if ( (0 == touches) || ((0 != id_state_old_flag[i]) && (0 == id_state_flag[i])) ) {
+        if ((0 != id_state_old_flag[i]) && (0 == id_state_flag[i])) {
             input_mt_slot(ts->input, i);
-			input_report_abs(ts->input, ABS_MT_TRACKING_ID, -1);
-            input_mt_report_slot_state(ts->input, MT_TOOL_FINGER, false);
+            input_report_abs(ts->input, ABS_MT_TRACKING_ID, -1);
             id_sign[i]=0;
         }
         id_state_old_flag[i] = id_state_flag[i];
     }
 
-    input_mt_report_pointer_emulation(ts->input, true);
 
     if (0 == touches) {
     #ifdef HAVE_TOUCH_KEY
@@ -558,7 +555,13 @@ static void process_gslX680_data(struct gsl_ts *ts)
     #endif
     }
 
-    input_sync(ts->input);
+
+    if (touches || touches != ts->prev_touches)
+    {
+        input_mt_report_pointer_emulation(ts->input, true);
+        input_sync(ts->input);
+    }
+
     ts->prev_touches = touches;
 }
 
@@ -933,6 +936,13 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
     set_bit(ABS_MT_WIDTH_MAJOR, input_device->absbit);
 
     set_bit(BTN_TOUCH, input_device->keybit);
+    set_bit(BTN_TOOL_FINGER, input_device->keybit);
+
+    set_bit(BTN_TOOL_DOUBLETAP, input_device->keybit);
+    set_bit(BTN_TOOL_TRIPLETAP, input_device->keybit);
+    set_bit(BTN_TOOL_QUADTAP, input_device->keybit);
+    set_bit(BTN_TOOL_QUINTTAP, input_device->keybit);
+    
 
     input_set_abs_params(input_device, ABS_X, 0, SCREEN_MAX_X, 0, 0);
     input_set_abs_params(input_device, ABS_Y, 0, SCREEN_MAX_Y, 0, 0);
