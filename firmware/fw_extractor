@@ -26,6 +26,10 @@ def is_register(f, register, value=None):
     return value is None or word == value
 
 
+def is_end(reg, value):
+    return (reg == 0x7c and value == 0xFFFFFF16)
+
+
 def is_sequence(f):
     if (is_register(f, 0x00) and
        is_register(f, 0x04) and
@@ -36,13 +40,13 @@ def is_sequence(f):
        is_register(f, 0x18)):
         reg = 0x18
         next_reg = get_word_value(f)
-        f.seek(4, 1)
+        next_value = get_word_value(f)
         length = 8
-        while next_reg > reg and next_reg < 256 and next_reg != 0xf0:
+        while next_reg > reg and next_reg < 256 and next_reg != 0xf0 and not is_end(next_reg, next_value):
             length += 1
             reg = next_reg
             next_reg = get_word_value(f)
-            f.seek(4, 1)
+            next_value = get_word_value(f)
         f.seek(-8, 1)
         return True
     return False
@@ -57,7 +61,6 @@ def find_sequence(f, f_end):
         pos_end = pos_start
         page_count = 0
         if is_register(f, 0xf0) and is_sequence(f):
-            print "firmware start found at 0x%x\n" % pos_start
             pos_end = f.tell()
             reg = get_word_value(f)
             page = get_word_value(f)
@@ -66,44 +69,46 @@ def find_sequence(f, f_end):
                 page_count += 1
                 if not is_sequence(f):
                     break
-                pos_end = f.tell()
                 reg = get_word_value(f)
                 page = get_word_value(f)
+                pos_end = f.tell()
+            if not is_end(reg, page):
+                return False, pos_end
             break
     if page_count == 0:
-        return 0, 0
+        return False, pos_end
+    print "firmware found at 0x%x" % pos_start
+    print "end 0x%x" % pos_end
     print "page count", page_count
     print "size", pos_end - pos_start
     return pos_start, pos_end
 
-if len(sys.argv) < 3:
-    print "Usage:\n./fw_extractor <source file> <destination file>"
-    print "Example:\n./nfw_extractor android_gslx680.ko my_tablets.fw"
-    exit(1)
 
-f = open(sys.argv[1], "rb")
+def process_file(f, outfilename):
+    f.seek(0, 2)
+    size = f.tell()
+    f.seek(0)
 
-f.seek(0, 2)
-size = f.tell()
-f.seek(0)
+    fw_count = 1
+    ext = ""
 
-ext = ""
+    while f.tell() < size - 8:
+        fw_start, fw_end = find_sequence(f, size)
+        if not fw_start is False:
+            f.seek(fw_start)
+            fw = f.read(fw_end - fw_start)
 
-while f.tell() < size:
-    fw_start, fw_end = find_sequence(f, size)
-    if fw_start == fw_end:
-        break
+            f2 = open(outfilename + ext, "wb")
+            f2.write(fw)
+            f2.close()
+        f.seek(fw_end)
+        fw_count += 1
+        ext = ".%02d" % fw_count
 
-    f.seek(fw_start)
-    fw = f.read(fw_end - fw_start)
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print "Usage:\n./fw_extractor <source file> <destination file>"
+        print "Example:\n./nfw_extractor android_gslx680.ko my_tablets.fw"
+        exit(1)
 
-    f2 = open(sys.argv[2] + ext, "wb")
-    f2.write(fw)
-    f2.close()
-
-    f.seek(fw_end)
-    ext += '.x'
-
-
-
-
+    process_file(open(sys.argv[1], "rb"), sys.argv[2])
