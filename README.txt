@@ -39,6 +39,11 @@ On your build machine, on the command line, use the script
 
 ./firmware/fw_extractor my_android_gslx680.ko my_tablets.fw
 
+The Android driver may well contain multiple firmwares to support
+different hardware configurations with the same driver. The extractor
+will spit those out as seperate files. We currently have no way of
+knowing which is right for your device. You will have to try each.
+
 
 Build Instructions
 ==================
