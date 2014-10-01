@@ -3,6 +3,11 @@ from subprocess import *
 import sys
 import os
 
+if len(sys.argv) != 2:
+    print "Firware extractor.\n"
+    print "Requires elf file (driver) argument"
+    sys.exit(1)
+
 filename = sys.argv[1]
 
 call(['objcopy','-I','elf32-little','-j','.rodata','-O','binary',filename,'temp.bin'])
