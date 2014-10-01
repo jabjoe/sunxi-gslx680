@@ -12,7 +12,7 @@ filename = sys.argv[1]
 
 call(['objcopy','-I','elf32-little','-j','.rodata','-O','binary',filename,'temp.bin'])
 
-p = Popen(['/bin/sh', '-c', 'readelf -s '+ filename +' | grep FW'], stdout=PIPE)
+p = Popen(['/bin/sh', '-c', 'readelf -s '+ filename +' | grep -i fw'], stdout=PIPE)
 
 for line in p.stdout:
     args = line.split()
