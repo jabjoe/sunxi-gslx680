@@ -1,114 +1,33 @@
 #! /usr/bin/python
-# This python script is to extract the gslx680 firmware out of an
-# existing driver. It seams like for most gslx680 drivers out there
-# (probably related) the firmware is included in the source and build
-# into the kernel module of the driver. This driver uses a separate
-# firmware file so exact hardware is done in runtime config.
-
-
+from subprocess import *
 import sys
 import os
 
+if len(sys.argv) != 2:
+    print "Firware extractor.\n"
+    print "Requires elf file (driver) argument"
+    sys.exit(1)
 
-def get_word_value(f):
-    t = f.read(4)
-    if len(t) != 4:
-        return 0
-    return ((ord(t[3]) << 24) | (ord(t[2]) << 16) | (ord(t[1]) << 8)
-            | ord(t[0]))
+filename = sys.argv[1]
 
+p = Popen(['/bin/sh', '-c', 'readelf -S '+ filename + ' | grep .rodata\ '], stdout=PIPE)
 
-def is_register(f, register, value=None):
-    reg = get_word_value(f)
-    if reg != register:
-        return False
-    word = get_word_value(f)
-    return value is None or word == value
+args = p.stdout.readlines()
 
+if len(args) != 1:
+    print "No simple .rodata section found"
+    sys.exit(1)
 
-def is_end(reg, value):
-    return (reg == 0x7c and value == 0xFFFFFF16)
+rodata = args[0]
 
+args = rodata.split()
 
-def is_sequence(f):
-    if (is_register(f, 0x00) and
-       is_register(f, 0x04) and
-       is_register(f, 0x08) and
-       is_register(f, 0x0c) and
-       is_register(f, 0x10) and
-       is_register(f, 0x14) and
-       is_register(f, 0x18)):
-        reg = 0x18
-        next_reg = get_word_value(f)
-        next_value = get_word_value(f)
-        length = 8
-        while next_reg > reg and next_reg < 256 and next_reg != 0xf0 and not is_end(next_reg, next_value):
-            length += 1
-            reg = next_reg
-            next_reg = get_word_value(f)
-            next_value = get_word_value(f)
-        f.seek(-8, 1)
-        return True
-    return False
+offset = int(args[4], 16)
 
+p = Popen(['/bin/sh', '-c', 'readelf -s '+ filename +' | grep -i fw'], stdout=PIPE)
 
-def find_sequence(f, f_end):
-    pos_start = 0
-    pos_end = 0
-    page_count = 0
-    while f.tell() < f_end:
-        pos_start = f.tell()
-        pos_end = pos_start
-        page_count = 0
-        if is_register(f, 0xf0) and is_sequence(f):
-            pos_end = f.tell()
-            reg = get_word_value(f)
-            page = get_word_value(f)
-            page_count = 1
-            while reg == 0xf0 and page < 256:
-                page_count += 1
-                if not is_sequence(f):
-                    break
-                reg = get_word_value(f)
-                page = get_word_value(f)
-                pos_end = f.tell()
-            if not is_end(reg, page):
-                return False, pos_end
-            break
-    if page_count == 0:
-        return False, pos_end
-    print "firmware found at 0x%x" % pos_start
-    print "end 0x%x" % pos_end
-    print "page count", page_count
-    print "size", pos_end - pos_start
-    return pos_start, pos_end
+for line in p.stdout:
+    args = line.split()
 
-
-def process_file(f, outfilename):
-    f.seek(0, 2)
-    size = f.tell()
-    f.seek(0)
-
-    fw_count = 1
-    ext = ""
-
-    while f.tell() < size - 8:
-        fw_start, fw_end = find_sequence(f, size)
-        if not fw_start is False:
-            f.seek(fw_start)
-            fw = f.read(fw_end - fw_start)
-
-            f2 = open(outfilename + ext, "wb")
-            f2.write(fw)
-            f2.close()
-        f.seek(fw_end)
-        fw_count += 1
-        ext = ".%02d" % fw_count
-
-if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print "Usage:\n./fw_extractor <source file> <destination file>"
-        print "Example:\n./nfw_extractor android_gslx680.ko my_tablets.fw"
-        exit(1)
-
-    process_file(open(sys.argv[1], "rb"), sys.argv[2])
+    print "Found", args[7], "offset", offset + int(args[1],16), "count", args[2]
+    call(['dd','if='+filename,'bs=1','count='+args[2], 'skip='+str(offset + int(args[1],16)),'of='+args[7] + ".fw"])
