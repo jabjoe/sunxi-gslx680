@@ -10,14 +10,24 @@ if len(sys.argv) != 2:
 
 filename = sys.argv[1]
 
-call(['objcopy','-I','elf32-little','-j','.rodata','-O','binary',filename,'temp.bin'])
+p = Popen(['/bin/sh', '-c', 'readelf -S '+ filename + ' | grep .rodata\ '], stdout=PIPE)
+
+args = p.stdout.readlines()
+
+if len(args) != 1:
+    print "No simple .rodata section found"
+    sys.exit(1)
+
+rodata = args[0]
+
+args = rodata.split()
+
+offset = int(args[4], 16)
 
 p = Popen(['/bin/sh', '-c', 'readelf -s '+ filename +' | grep -i fw'], stdout=PIPE)
 
 for line in p.stdout:
     args = line.split()
-    
-    print "Found", args[7], "offset", int(args[1],16), "count", args[2]
-    call(['dd','if=temp.bin','bs=1','count='+args[2], 'skip='+str(int(args[1],16)),'of='+args[7] + ".fw"])
 
-os.unlink('temp.bin')
+    print "Found", args[7], "offset", offset + int(args[1],16), "count", args[2]
+    call(['dd','if='+filename,'bs=1','count='+args[2], 'skip='+str(offset + int(args[1],16)),'of='+args[7] + ".fw"])
