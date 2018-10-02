@@ -1,3 +1,16 @@
+Update
+======
+
+This version hasn't been worked on in a long time.
+It was to scratch an itch which has long since gone.
+
+A far more maintained fork is:
+
+https://github.com/onitake/gslx680-acpi
+
+
+
+
 About
 =====
 
